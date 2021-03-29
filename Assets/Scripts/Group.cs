@@ -17,7 +17,7 @@ public class Group : MonoBehaviour
     void Start()
     {
         // Default position not valid? Then it's game over
-        if (!IsValidGridPos(this.gameObject, false))
+        if (!IsValidGridPos(this.gameObject))
         {
             Debug.Log("GAME OVER");
             Destroy(gameObject);
@@ -42,7 +42,7 @@ public class Group : MonoBehaviour
             transform.position += new Vector3(-1, 0, 0);
 
             // See if the new position is valid
-            if(IsValidGridPos(this.gameObject, false))
+            if(IsValidGridPos(this.gameObject))
             {
                 shadow.updateShadowMove(-1);
 
@@ -61,7 +61,7 @@ public class Group : MonoBehaviour
             transform.position += new Vector3(1, 0, 0);
 
             // See if the new position is valid
-            if (IsValidGridPos(this.gameObject, false))
+            if (IsValidGridPos(this.gameObject))
             {
                 shadow.updateShadowMove(1);
 
@@ -81,7 +81,7 @@ public class Group : MonoBehaviour
             
 
             // See if the new position is valid
-            if (IsValidGridPos(this.gameObject, false))
+            if (IsValidGridPos(this.gameObject))
             {
                 shadow.updateShadowRotate(-90);
 
@@ -99,7 +99,7 @@ public class Group : MonoBehaviour
             transform.position += new Vector3(0, -1, 0);
 
             // See if the new position is valid
-            if (IsValidGridPos(this.gameObject, false))
+            if (IsValidGridPos(this.gameObject))
             {
                 updateGrid(); // Update the grid since it is valid
             }
@@ -127,7 +127,7 @@ public class Group : MonoBehaviour
         }
         else if(Input.GetKeyDown(KeyCode.Space))
         {
-            while(IsValidGridPos(this.gameObject, false))
+            while(IsValidGridPos(this.gameObject))
             {
                 transform.position += new Vector3(0, -1, 0);
             }
@@ -186,7 +186,7 @@ public class Group : MonoBehaviour
     }
 
     // Checks if all the blocks within a group have a valid position inside the grid
-    bool IsValidGridPos(GameObject obj, bool isShadow)
+    bool IsValidGridPos(GameObject obj)
     {
         foreach (Transform child in obj.transform)
         {

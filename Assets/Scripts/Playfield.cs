@@ -40,6 +40,7 @@ public class Playfield : MonoBehaviour
     }
 
     // Decreases a row on a level
+    // Decreases row y to row y - 1
     public static void decreaseRow(int y)
     {
         for(int x = 0; x < w; ++x)
