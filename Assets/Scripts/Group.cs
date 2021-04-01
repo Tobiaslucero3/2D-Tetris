@@ -13,6 +13,10 @@ public class Group : MonoBehaviour
 
     private Store store;
 
+    private bool inBetweenBorders = false;
+
+    private int childWithTransform;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -26,14 +30,20 @@ public class Group : MonoBehaviour
         store = FindObjectOfType<Store>();
         //shadow = FindObjectOfType<Shadow>();
         //shadow.AssignGroup(this);
-
+        for(int i = 0; i < transform.childCount; ++i)
+        {
+            if((transform.GetChild(i).position.x == transform.position.x)&&
+               (transform.GetChild(i).position.y == transform.position.y))
+            {
+                childWithTransform = i;
+                break;
+            }
+        }
     }
 
     // Update is called once per frame
     void Update()
     {
-        posy = (int)(transform.position.y);
-        //calculateShadow();
 
         // Move left
         if(Input.GetKeyDown(KeyCode.LeftArrow))
@@ -41,51 +51,53 @@ public class Group : MonoBehaviour
             // Modify position
             transform.position += new Vector3(-1, 0, 0);
 
-            // See if the new position is valid
-            if(IsValidGridPos() == 1)
+            // If the method returns 2 or we are in between borders
+            if((IsValidGridPos() == 2)||(inBetweenBorders))
             {
-                //shadow.UpdateShadowMove(-1);
+                inBetweenBorders = true; // We are still in between borders
+                UpdateGridInBetweenBorders(); // Update in between borders
+            }
+            // The position is valid and not between borders
+            else if (IsValidGridPos() == 1)
+            {
+                //shadow.UpdateShadowMove(-1); // Update the shadow
 
                 UpdateGrid(); // Update the grid since it is valid
             }
-            else if(IsValidGridPos() == 2)
-            {
-              //  shadow.UpdateShadowMove(-1);
-
-                UpdateGridInBetweenBorders();
-            }
             else
             {
-                transform.position += new Vector3(1, 0, 0);
+                transform.position += new Vector3(1, 0, 0); // Revert
             }
-        } // Move right
-        else if(Input.GetKeyDown(KeyCode.RightArrow))
+        }
+        // Move right
+        else if (Input.GetKeyDown(KeyCode.RightArrow))
         {
             // Modify position
             transform.position += new Vector3(1, 0, 0);
 
-            // See if the new position is valid
-            if (IsValidGridPos() == 1)
+            // If the method returns 2 or we are in between borders
+            if ((IsValidGridPos() == 2) || (inBetweenBorders))
             {
-               // shadow.UpdateShadowMove(1);
+                inBetweenBorders = true;
+                UpdateGridInBetweenBorders();
+            }
+            // Otherwise the position is entirely valid and not between borders
+            else if (IsValidGridPos() == 1)
+            {
+                //shadow.UpdateShadowMove(-1); // Update the shadow
 
                 UpdateGrid(); // Update the grid since it is valid
- 
-            }
-            else if (IsValidGridPos() == 2)
-            {
-               // shadow.UpdateShadowMove(1);
-
-                UpdateGridInBetweenBorders();
             }
             else
             {
                 transform.position += new Vector3(-1, 0, 0); // Its not valid so revert to original position
             }
-        } // Rotate
+        }
+        // Rotate
         else if(Input.GetKeyDown(KeyCode.UpArrow))
         {
-            transform.Rotate(0, 0, -90);
+            transform.Rotate(0, 0, -90); // Rotate
+
             // See if the new position is valid
             if (IsValidGridPos() == 1)
             {
@@ -94,9 +106,10 @@ public class Group : MonoBehaviour
                 UpdateGrid(); // Update the grid since it is valid
                 
             }
+            // We are in between borders
             else if (IsValidGridPos() == 2)
             {
-               // shadow.UpdateShadowRotate(-90);
+                // shadow.UpdateShadowRotate(-90);
 
                 UpdateGridInBetweenBorders();
             }
@@ -104,8 +117,9 @@ public class Group : MonoBehaviour
             {
                 transform.Rotate(0, 0, 90); // Its not valid so revert to original position
             }
-        } // Fall
-        else if(Input.GetKeyDown(KeyCode.DownArrow) || (Time.time - lastFall >=(1.0/Difficulty.GetDifficulty())))
+        } 
+        // Fall
+        else if(Input.GetKeyDown(KeyCode.DownArrow) || (Time.time - lastFall >=(5.0/Difficulty.GetDifficulty())))
         {
             // Modify position
             transform.position += new Vector3(0, -1, 0);
@@ -135,17 +149,20 @@ public class Group : MonoBehaviour
 
             }
 
-            lastFall = Time.time;
+            lastFall = Time.time; // Update this as last time decreased y position
         }
-        else if(Input.GetKeyDown(KeyCode.Space))
+        // Immediate drop
+        else if(Input.GetKeyDown(KeyCode.Space)) // Immediate drop
         {
+            // Loop while making sure the position is valid and adding a vector in the downward direction
             while(IsValidGridPos() == 1)
             {
-                transform.position += new Vector3(0, -1, 0);
+                transform.position += new Vector3(0, -1, 0); // Send it one down
             }
 
             transform.position += new Vector3(0, 1, 0); // Revert by one step since we went too far
 
+            // Update the grid
             UpdateGrid();
 
             // Destroy the shadow
@@ -160,25 +177,26 @@ public class Group : MonoBehaviour
             // Disable script
             enabled = false;
 
+            // This was not just stored and therefore the player can store again
             store.ChangeJustStored(false);
 
         }
-        else if(Input.GetKeyDown(KeyCode.S))
+        // Store the piece
+        else if(Input.GetKeyDown(KeyCode.S)) // Store the piece
         {
-
             if(!store.JustStored())
             {
-                // Destroy the shadow
+                // Store the shadow
                 //  shadow.StoreShadow();
 
-                enabled = false;
+                // Turn off the script
+                enabled = false;   
 
+                // Store the piece
                 store.StorePiece(this);
             }    
         }
     }
-
-
 
     // Checks if all the blocks within a group have a valid position inside the grid
     // Returns 0 if not valid 1 if valid 2 if in between a border
@@ -208,6 +226,7 @@ public class Group : MonoBehaviour
         return 1;
     }
 
+    // Gets the lowest y position of the pieces in this group
     public int GetYPos()
     {
         int ret = (int)transform.position.y;
@@ -221,6 +240,7 @@ public class Group : MonoBehaviour
         return ret;
     }
 
+    // This method updates the grid after a piece movement to reflect the new grid
     void UpdateGrid()
     {
         // Remove old children from the grid
@@ -242,6 +262,8 @@ public class Group : MonoBehaviour
         // Add new children to the grid
         foreach (Transform child in transform)
         {
+
+            //Debug.Log(child.position.x + " " + child.position.y);
             Vector2 v = Playfield.roundVec2(child.position);
             Playfield.grid[(int)v.x, (int)v.y] = child;
         }
@@ -265,26 +287,62 @@ public class Group : MonoBehaviour
                 }
             }
         }
+
+        inBetweenBorders = false; // Do this to verify that the piece is still in between the border
+        Vector2 v;
+
         // Add new children to the grid
         foreach (Transform child in transform)
         {
-            Vector2 v = Playfield.roundVec2(child.position);
+            v = Playfield.roundVec2(child.position);
 
             // If outside the left border sets the x component to the width
-            if(v.x < 0)
+            if (v.x < 0)
             {
-                v.x = Playfield.w - 1;
-                child.position = new Vector3(Playfield.w - 1, child.position.y);
+                inBetweenBorders = true;
+                v.x = Playfield.w - 1; // putting it on the right side
+                child.position = v;
             }
             // If outside the rigth border sets the x component to zero
-            else if(v.x >= Playfield.w)
+            else if (v.x >= Playfield.w)
             {
-                v.x = 0;
-                child.position = new Vector3(0, child.position.y);
+                inBetweenBorders = true;
+                v.x = 0; // putting it on the left side
+                child.position = v;
             }
-            Playfield.grid[(int)v.x, (int)v.y] = child;
+            Playfield.grid[(int)v.x, (int)v.y] = child; // Back into the grid at new position
         }
+        
+        // If we are not in between borders then the piece is no longer in between the borders therefore we have to update
+        // the piece transform vs the individual block transforms
+        if (!inBetweenBorders)
+        {
+            // Get the x component of the piece that belonged to the actual transform
+            int childPosX = (int)Mathf.Round(transform.GetChild(childWithTransform).transform.position.x);
+
+            int move = 0; // Will use this vector to move all the small block transforms
+
+            v = Playfield.roundVec2(transform.position);
+
+            move = childPosX - (int)v.x; // The amount we have to compensate is the difference between my child's
+            // position and my current position
+
+            v.x = childPosX; // Set the new transform position to the old child position
+
+            transform.position = v; // Set the transform position to our vector
+
+            // Now we actually go to every child and perform the transform to move it to the right place
+            foreach (Transform child in transform)
+            {
+                child.position -= new Vector3(move, 0, 0);
+            }
+
+        }
+
+
+
     }
+
 }
 
 
