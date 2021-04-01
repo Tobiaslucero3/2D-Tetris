@@ -35,8 +35,8 @@ public class Store : MonoBehaviour
 
             store.enabled = true; // Enables the Group script 
 
-            store.shadow.enabled = true;
-            store.shadow.storeShadow();
+            //store.shadow.enabled = true;
+           // store.shadow.StoreShadow();
         }
         
         store = obj; // Saves the object being stored

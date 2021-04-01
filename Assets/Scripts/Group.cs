@@ -9,7 +9,7 @@ public class Group : MonoBehaviour
 
     float lastFall = 0;
 
-    public Shadow shadow; // The shadow which shows you where it is going to land on the board
+  //  public Shadow shadow; // The shadow which shows you where it is going to land on the board
 
     private Store store;
 
@@ -17,15 +17,15 @@ public class Group : MonoBehaviour
     void Start()
     {
         // Default position not valid? Then it's game over
-        if (!IsValidGridPos(this.gameObject))
+        if (IsValidGridPos() != 1)
         {
             Debug.Log("GAME OVER");
             Destroy(gameObject);
         }
 
         store = FindObjectOfType<Store>();
-        shadow = FindObjectOfType<Shadow>();
-        shadow.AssignGroup(this);
+        //shadow = FindObjectOfType<Shadow>();
+        //shadow.AssignGroup(this);
 
     }
 
@@ -42,13 +42,17 @@ public class Group : MonoBehaviour
             transform.position += new Vector3(-1, 0, 0);
 
             // See if the new position is valid
-            if(IsValidGridPos(this.gameObject))
+            if(IsValidGridPos() == 1)
             {
-                shadow.updateShadowMove(-1);
+                //shadow.UpdateShadowMove(-1);
 
-                updateGrid(); // Update the grid since it is valid
+                UpdateGrid(); // Update the grid since it is valid
+            }
+            else if(IsValidGridPos() == 2)
+            {
+              //  shadow.UpdateShadowMove(-1);
 
-                
+                UpdateGridInBetweenBorders();
             }
             else
             {
@@ -61,13 +65,18 @@ public class Group : MonoBehaviour
             transform.position += new Vector3(1, 0, 0);
 
             // See if the new position is valid
-            if (IsValidGridPos(this.gameObject))
+            if (IsValidGridPos() == 1)
             {
-                shadow.updateShadowMove(1);
+               // shadow.UpdateShadowMove(1);
 
-                updateGrid(); // Update the grid since it is valid
+                UpdateGrid(); // Update the grid since it is valid
+ 
+            }
+            else if (IsValidGridPos() == 2)
+            {
+               // shadow.UpdateShadowMove(1);
 
-                
+                UpdateGridInBetweenBorders();
             }
             else
             {
@@ -77,16 +86,19 @@ public class Group : MonoBehaviour
         else if(Input.GetKeyDown(KeyCode.UpArrow))
         {
             transform.Rotate(0, 0, -90);
-
-            
-
             // See if the new position is valid
-            if (IsValidGridPos(this.gameObject))
+            if (IsValidGridPos() == 1)
             {
-                shadow.updateShadowRotate(-90);
+                //shadow.UpdateShadowRotate(-90);
 
-                updateGrid(); // Update the grid since it is valid
+                UpdateGrid(); // Update the grid since it is valid
                 
+            }
+            else if (IsValidGridPos() == 2)
+            {
+               // shadow.UpdateShadowRotate(-90);
+
+                UpdateGridInBetweenBorders();
             }
             else
             {
@@ -99,16 +111,16 @@ public class Group : MonoBehaviour
             transform.position += new Vector3(0, -1, 0);
 
             // See if the new position is valid
-            if (IsValidGridPos(this.gameObject))
+            if (IsValidGridPos() == 1)
             {
-                updateGrid(); // Update the grid since it is valid
+                UpdateGrid(); // Update the grid since it is valid
             }
             else
             {
                 transform.position += new Vector3(0, 1, 0); // Revert
 
                 // Destroy the shadow
-                shadow.destroyShadow();
+                //shadow.DestroyShadow();
 
                 // Clear filled horizontal lines
                 Playfield.deleteFullRows();
@@ -127,17 +139,17 @@ public class Group : MonoBehaviour
         }
         else if(Input.GetKeyDown(KeyCode.Space))
         {
-            while(IsValidGridPos(this.gameObject))
+            while(IsValidGridPos() == 1)
             {
                 transform.position += new Vector3(0, -1, 0);
             }
 
             transform.position += new Vector3(0, 1, 0); // Revert by one step since we went too far
 
-            updateGrid();
+            UpdateGrid();
 
             // Destroy the shadow
-            shadow.destroyShadow();
+            //shadow.DestroyShadow();
 
             // Clear filled horizontal lines
             Playfield.deleteFullRows();
@@ -153,12 +165,11 @@ public class Group : MonoBehaviour
         }
         else if(Input.GetKeyDown(KeyCode.S))
         {
-           
 
             if(!store.JustStored())
             {
                 // Destroy the shadow
-                shadow.storeShadow();
+                //  shadow.StoreShadow();
 
                 enabled = false;
 
@@ -167,48 +178,34 @@ public class Group : MonoBehaviour
         }
     }
 
-    void printGrid()
-    {
-        for (int y = 0; y < Playfield.h; ++y)
-        {
-            for (int x = 0; x < Playfield.w; ++x)
-            {
-                if (Playfield.grid[x, y] != null)
-                {
-                    Debug.Log("1");
-                } else
-                {
-                    Debug.Log("0");
-                }
-            }
-            Debug.Log("\n");
-        }
-    }
+
 
     // Checks if all the blocks within a group have a valid position inside the grid
-    bool IsValidGridPos(GameObject obj)
+    // Returns 0 if not valid 1 if valid 2 if in between a border
+    int IsValidGridPos()
     {
-        foreach (Transform child in obj.transform)
+        foreach (Transform child in transform)
         {
             Vector2 v = Playfield.roundVec2(child.position);
-            //Debug.Log(child.position.y);
             child.position = v;
 
             // Not inside border?
             if (!Playfield.insideBorder(v))
             {
-                return false;
+                if (Playfield.outsideBorder(v))
+                {
+                    return 2;
+                }
+                return 0;
             }
-
             // Block in grid cell (and not part of same group)?
             if (Playfield.grid[(int)v.x, (int)v.y] != null &&
-                Playfield.grid[(int)v.x, (int)v.y].parent != obj.transform)
+                Playfield.grid[(int)v.x, (int)v.y].parent != transform)
             {
-                return false;
+                return 0;
             }
-
         }
-        return true;
+        return 1;
     }
 
     public int GetYPos()
@@ -224,7 +221,7 @@ public class Group : MonoBehaviour
         return ret;
     }
 
-    void updateGrid()
+    void UpdateGrid()
     {
         // Remove old children from the grid
         for(int y = 0; y < Playfield.h; ++y)
@@ -250,4 +247,44 @@ public class Group : MonoBehaviour
         }
     }
 
+    // If the group is currently in between borders this is the method that runs
+    void UpdateGridInBetweenBorders()
+    {
+        // Remove old children from the grid
+        for (int y = 0; y < Playfield.h; ++y)
+        {
+            for (int x = 0; x < Playfield.w; ++x)
+            {
+                if (Playfield.grid[x, y] != null)
+                {
+                    // Checks if a block belongs to this current group 
+                    if (Playfield.grid[x, y].parent == transform)
+                    {
+                        Playfield.grid[x, y] = null;
+                    }
+                }
+            }
+        }
+        // Add new children to the grid
+        foreach (Transform child in transform)
+        {
+            Vector2 v = Playfield.roundVec2(child.position);
+
+            // If outside the left border sets the x component to the width
+            if(v.x < 0)
+            {
+                v.x = Playfield.w - 1;
+                child.position = new Vector3(Playfield.w - 1, child.position.y);
+            }
+            // If outside the rigth border sets the x component to zero
+            else if(v.x >= Playfield.w)
+            {
+                v.x = 0;
+                child.position = new Vector3(0, child.position.y);
+            }
+            Playfield.grid[(int)v.x, (int)v.y] = child;
+        }
+    }
 }
+
+
