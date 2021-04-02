@@ -11,11 +11,11 @@ public class Group : MonoBehaviour
 
   //  public Shadow shadow; // The shadow which shows you where it is going to land on the board
 
-    private Store store;
+    private Store store; // The instance of the store to hold the piece
 
-    private bool inBetweenBorders = false;
+    private bool inBetweenBorders = false; // This tells us if we are currently in between borders
 
-    private int childWithTransform;
+    private int childWithTransform; // This is the child that usually has the piece transform associated with it
 
     // Start is called before the first frame update
     void Start()
@@ -44,7 +44,6 @@ public class Group : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
         // Move left
         if(Input.GetKeyDown(KeyCode.LeftArrow))
         {
@@ -96,30 +95,32 @@ public class Group : MonoBehaviour
         // Rotate
         else if(Input.GetKeyDown(KeyCode.UpArrow))
         {
-            transform.Rotate(0, 0, -90); // Rotate
-
-            // See if the new position is valid
-            if (IsValidGridPos() == 1)
-            {
-                //shadow.UpdateShadowRotate(-90);
-
-                UpdateGrid(); // Update the grid since it is valid
-                
-            }
-            // We are in between borders
-            else if (IsValidGridPos() == 2)
-            {
-                // shadow.UpdateShadowRotate(-90);
-
-                UpdateGridInBetweenBorders();
-            }
+            //Debug.Log(inBetweenBorders);
+            if (inBetweenBorders)
+                RotateInBetweenBorders();
             else
-            {
-                transform.Rotate(0, 0, 90); // Its not valid so revert to original position
-            }
+                transform.Rotate(0, 0, -90); // Rotate
+
+           // If the method returns 2 or we are in between borders
+           if (IsValidGridPos() == 2)
+           {
+                    UpdateGridInBetweenBorders();
+           }
+                // Otherwise the position is entirely valid and not between borders
+           else if (IsValidGridPos() == 1)
+           {
+           //shadow.UpdateShadowMove(-1); // Update the shadow
+
+                 UpdateGrid(); // Update the grid since it is valid
+           }
+           else
+           {
+                 transform.Rotate(0, 0, 90); // Its not valid so revert to original position
+           }
+            
         } 
         // Fall
-        else if(Input.GetKeyDown(KeyCode.DownArrow) || (Time.time - lastFall >=(5.0/Difficulty.GetDifficulty())))
+        else if(Input.GetKeyDown(KeyCode.DownArrow) || (Time.time - lastFall >=(2.0/Difficulty.GetDifficulty())))
         {
             // Modify position
             transform.position += new Vector3(0, -1, 0);
@@ -300,22 +301,24 @@ public class Group : MonoBehaviour
             if (v.x < 0)
             {
                 inBetweenBorders = true;
-                v.x = Playfield.w - 1; // putting it on the right side
+                v.x = Playfield.w + v.x; // putting it on the right side
                 child.position = v;
             }
             // If outside the rigth border sets the x component to zero
             else if (v.x >= Playfield.w)
             {
                 inBetweenBorders = true;
-                v.x = 0; // putting it on the left side
+                v.x = v.x - Playfield.w; // putting it on the left side
                 child.position = v;
             }
             Playfield.grid[(int)v.x, (int)v.y] = child; // Back into the grid at new position
         }
-        
-        // If we are not in between borders then the piece is no longer in between the borders therefore we have to update
-        // the piece transform vs the individual block transforms
-        if (!inBetweenBorders)
+
+        v = Playfield.roundVec2(transform.position);
+
+        int transformPosX = (int)v.x;
+
+        if ((transformPosX < 0) || (transformPosX >= Playfield.w))
         {
             // Get the x component of the piece that belonged to the actual transform
             int childPosX = (int)Mathf.Round(transform.GetChild(childWithTransform).transform.position.x);
@@ -336,13 +339,39 @@ public class Group : MonoBehaviour
             {
                 child.position -= new Vector3(move, 0, 0);
             }
-
         }
-
-
-
     }
 
+    // This method runs whenever the user tries to rotate the piece while being between the borders
+    void RotateInBetweenBorders()
+    {
+        int transformPosX = (int)Mathf.Round(transform.position.x); // Get the transform position
+
+        Vector2 v;
+
+        bool left = transformPosX < 4; // Whether the group transform is to the left of the board or not
+        foreach (Transform child in transform)
+        {
+            v = Playfield.roundVec2(child.position);
+
+            // If the Group transform is to the left and the current child is on the right side of the board
+            if (left&&(v.x > Playfield.w - 4))
+            {
+                v = new Vector2(-(Playfield.w - (int)v.x), v.y); // Put the child on the left side of the board where it would be
+            }
+            // Otherwise if the group transform is to the rigth and the current child is on the left side
+            else if(!left&&(v.x < 4))
+            {
+                v = new Vector2(Playfield.w + (int)v.x, v.y); // Put child on the right side
+            }
+
+            child.position = v; // Set the child position to the vector
+        }
+
+        // Actually rotate now. UpdateGridBetweenBorders() will do the rest of the work for us
+        transform.Rotate(0, 0, -90);
+
+    }
 }
 
 
