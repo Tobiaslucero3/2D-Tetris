@@ -8,7 +8,7 @@ public class Spawner : MonoBehaviour
 
     public GameObject[] groupsNoScripts; // A list of all the group game objects without the group script attached
 
-    public GameObject[] shadows; // A list of all the group game objects with the shadow script attached
+    //public GameObject[] shadows; // A list of all the group game objects with the shadow script attached
 
     private GameObject next; // This is the game object in the next box without a group script
 
@@ -38,7 +38,7 @@ public class Spawner : MonoBehaviour
     {
         Instantiate(groups[nextIndex], transform.position, Quaternion.identity);
 
-        Instantiate(shadows[nextIndex], pos, Quaternion.identity);
+        //Instantiate(shadows[nextIndex], pos, Quaternion.identity);
 
         Destroy(next);
 
@@ -56,7 +56,7 @@ public class Spawner : MonoBehaviour
 
         Instantiate(groups[nextIndex], transform.position, Quaternion.identity);
 
-        Instantiate(shadows[nextIndex], pos, Quaternion.identity);
+       // Instantiate(shadows[nextIndex], pos, Quaternion.identity);
 
         nextIndex = Random.Range(0, groups.Length); // Pick a new one
 

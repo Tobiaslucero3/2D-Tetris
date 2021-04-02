@@ -11,16 +11,27 @@ public class Shadow : MonoBehaviour
 
     private void Start()
     {
-        updateShadow();
+        UpdateShadow();
     }
 
-    void updateShadow()
+    void UpdateShadow()
     {
         transform.position = Playfield.roundVec2(new Vector2(transform.position.x, 0));
 
         foreach (Transform child in transform)
         {
-            if (child.position.y < 0)
+            Vector2 v = Playfield.roundVec2(child.position);
+
+            if(v.x < 0)
+            {
+                Debug.Log(child.position.x + " " + v.x);
+                child.position = new Vector2(Playfield.w - 1, v.y);
+            }
+            else if(v.x >= Playfield.w)
+            {
+                child.position = new Vector2(0, v.y);
+            }
+            if (v.y < 0)
             {
                 transform.position += new Vector3(0, 1);
             }
@@ -102,26 +113,25 @@ public class Shadow : MonoBehaviour
         parent = group;
     }
 
-    public void updateShadowRotate(int degree)
+    public void UpdateShadowRotate(int degree)
     {
         transform.Rotate(0, 0, degree);
-        //transform.position = Playfield.roundVec2(transform.position);
-        updateShadow();
+        UpdateShadow();
     }
 
-    public void updateShadowMove(int x)
+    public void UpdateShadowMove(int x)
     {
         transform.position += new Vector3(x, 0);
-        updateShadow();
+        UpdateShadow();
     }
 
-    public void destroyShadow()
+    public void DestroyShadow()
     {
         Destroy(gameObject);
         Destroy(this);
     }
 
-    public void storeShadow()
+    public void StoreShadow()
     {
         if(stored)
         {
@@ -129,7 +139,7 @@ public class Shadow : MonoBehaviour
             transform.rotation = Quaternion.identity;
             gameObject.SetActive(true);
             stored = false;
-            updateShadow();
+            UpdateShadow();
         }
         else
         {
