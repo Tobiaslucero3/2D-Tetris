@@ -82,14 +82,13 @@ public class Playfield : MonoBehaviour
         }
         Score.increaseScore(Difficulty.GetDifficulty() *6);
         int score = Score.getScore();
-        if((score >= 50) && (score <= 150))
+        if((score >= 50) && (score <= 400))
         {
             Difficulty.SetDifficulty(1 + score / 50);
-        } else if ((score >= 150) && (score <= 1000))
+        } else if ((score >= 200) && (score <= 1000))
         {
             Difficulty.SetDifficulty(1 + score / 100);
         }
-
 
         return true;
     }
